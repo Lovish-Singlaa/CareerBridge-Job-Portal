@@ -29,7 +29,7 @@ const corsOptions = {
 }
 
 app.use(cors({
-  origin: 'https://careerbridge-job-portal-frontend.onrender.com',
+  origin: ['https://careerbridge-job-portal-frontend.onrender.com'],
   credentials: true,
 }));
 

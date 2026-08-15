@@ -183,3 +183,70 @@ export const updateProfile = async (req, res) => {
             console.log(error)
         }
     }
+
+export const toggleSaveJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const userId = req.id;
+
+        let user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        const isSaved = user.profile.savedJobs.includes(jobId);
+
+        if (isSaved) {
+            // Remove from saved jobs
+            user.profile.savedJobs = user.profile.savedJobs.filter(id => id.toString() !== jobId);
+        } else {
+            // Add to saved jobs
+            user.profile.savedJobs.push(jobId);
+        }
+
+        await user.save();
+
+        user = {
+            _id: user._id,
+            fullname: user.fullname,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            profile: user.profile
+        }
+
+        return res.status(200).json({
+            message: isSaved ? "Job removed from saved list" : "Job saved successfully",
+            user,
+            success: true
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server error", success: false });
+    }
+}
+
+export const getSavedJobs = async (req, res) => {
+    try {
+        const userId = req.id;
+        const user = await User.findById(userId).populate({
+            path: 'profile.savedJobs',
+            populate: {
+                path: 'companyId'
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        return res.status(200).json({
+            savedJobs: user.profile.savedJobs,
+            success: true
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server error", success: false });
+    }
+}
