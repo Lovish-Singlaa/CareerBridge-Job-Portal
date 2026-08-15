@@ -73,7 +73,7 @@ export const login = async (req, res) => {
             })
         }
         //check role
-        const isRoleMatched = user.role == role;
+        const isRoleMatched = user.role === role;
         if (!isRoleMatched) {
             return res.status(400).json({
                 message: "Incorrect role"
@@ -117,16 +117,25 @@ export const updateProfile = async (req, res) => {
         const { fullname, email, phoneNumber, bio, skills } = req.body;
 
         const file = req.file;  //cloudinary
-        const fileUri = getDataUri(file)
-
         let cloudResponse;
-        try {
-            cloudResponse = await cloudinary.uploader.upload(fileUri.content);
-        } catch (error) {
-            return res.status(500).json({
-                message: "Error uploading file",
-                success: false
-            });
+        
+        if (file) {
+            const fileUri = getDataUri(file);
+            try {
+                // Generate a unique public_id that ends in .pdf
+                const baseName = file.originalname.split('.')[0] || 'resume';
+                const uniqueId = `${baseName}_${Date.now()}.pdf`;
+                
+                cloudResponse = await cloudinary.uploader.upload(fileUri.content, { 
+                    resource_type: "raw",
+                    public_id: uniqueId
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    message: "Error uploading file",
+                    success: false
+                });
+            }
         }
 
             let skillsArray;
@@ -166,6 +175,7 @@ export const updateProfile = async (req, res) => {
 
             return res.status(200).json({
                 message: "Profile updated successfully",
+                user,
                 success: true
             })
 
